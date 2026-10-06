@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Mini Warrior - Fixed Edition</title>
+<style>
+:root{
+  --bg:#091018;--panel:#101b27;--panel2:#182735;--line:#334c61;
+  --gold:#ffd451;--blue:#2b8fe9;--green:#46dc78;--red:#f45b64;
+  --text:#eef5ff;--muted:#94a9bb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif;touch-action:none}
+button,input{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+
+.screen{position:relative;width:100%;height:100%}
+
+#home{
+  background:
+    radial-gradient(circle at 50% 40%,#213a50 0,#10202f 36%,#091018 75%);
+}
+#home::after{
+  content:"";position:absolute;inset:0;opacity:.10;pointer-events:none;
+  background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);
+  background-size:46px 46px;
+}
+
+.coinBox{
+  position:absolute;right:18px;top:18px;z-index:5;
+  background:#0c141cdd;border:1px solid #66551d;border-radius:13px;
+  padding:10px 15px;color:var(--gold);font-size:19px;font-weight:900;
+}
+.home{
+  position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(410px,92vw);text-align:center;
+}
+.logo{font-size:46px;font-weight:900;letter-spacing:4px;text-shadow:0 15px 40px #000;line-height:1}
+.subtitle{color:var(--muted);margin:11px 0 24px}
+.menu{
+  width:100%;padding:15px;margin:7px 0;border-radius:12px;border:1px solid #36516a;
+  background:linear-gradient(#203548,#142636);color:white;font-size:19px;font-weight:900;
+}
+.menu:hover{transform:translateY(-1px);background:linear-gradient(#29455b,#1a2d3d)}
+.menu.play{background:linear-gradient(#3497ee,#1768ae);border-color:#5bb0ff}
+.panelShade{position:absolute;inset:0;background:#0009;z-index:20;display:flex;align-items:center;justify-content:center}
+.panel{
+  width:min(900px,94vw);max-height:90vh;overflow:auto;padding:22px;border-radius:18px;
+  border:1px solid #3c5870;background:linear-gradient(#142331,#0d1720);
+  box-shadow:0 30px 80px #000b;
+}
+.panel h2{margin:0 0 17px;color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{border:1px solid #2f475c;border-radius:14px;background:#172635;padding:14px}
+.card h3{margin:0 0 8px}.icon{height:68px;display:flex;align-items:center;justify-content:center;font-size:48px}
+.muted{color:var(--muted);font-size:13px}.price{color:var(--gold);font-weight:900}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.smallBtn{
+  border:0;border-radius:9px;padding:10px 12px;background:#2d475d;color:white;font-weight:900
+}
+.smallBtn.buy{background:#207044}.smallBtn.selected{background:#2b63a4}
+.back{margin-top:16px}.setting{display:grid;grid-template-columns:160px 1fr 86px;gap:14px;padding:12px 0;border-bottom:1px solid #263a4e;align-items:center}
+.setting input[type=range]{width:100%}
+.key{min-width:76px;padding:8px;border-radius:8px;border:1px solid #48627a;background:#1d3141;color:#fff;font-weight:900}
+.help{margin-top:16px;padding:13px;border-radius:10px;background:#0a1118;color:#9db2c4;line-height:1.6}
+
+#game{background:#17261a}
+#canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+.hud{
+  position:absolute;left:15px;top:15px;z-index:5;min-width:270px;padding:12px;border-radius:14px;
+  background:#071019d9;border:1px solid #3c566b;backdrop-filter:blur(4px)
+}
+.hpTop{display:flex;justify-content:space-between;font-weight:900;margin-bottom:7px}
+.hpTrack{height:18px;border:1px solid #3c4b50;background:#1b2428;border-radius:20px;overflow:hidden}
+.hpFill{width:100%;height:100%;background:linear-gradient(90deg,#21ad58,#63ec83);transition:.12s}
+.stats{display:flex;gap:16px;margin-top:8px;color:#bdccda;font-size:14px}
+.stats b{color:#fff}
+.weapon{
+  position:absolute;right:15px;bottom:15px;z-index:5;min-width:225px;padding:12px;border-radius:14px;
+  background:#071019d9;border:1px solid #3c566b
+}
+.weaponTitle{font-size:21px;font-weight:900}.ammo{margin-top:4px;color:#9db2c4}
+.pause{
+  margin-top:9px;width:100%;border:0;border-radius:9px;padding:9px;background:#65323b;color:#fff;font-weight:900
+}
+.controls{
+  position:absolute;right:15px;top:15px;z-index:5;background:#07101999;border:1px solid #314758;border-radius:11px;
+  padding:9px 11px;color:#afc0ce;font-size:13px;text-align:right
+}
+.wave{
+  position:absolute;left:50%;top:72px;transform:translateX(-50%);z-index:5;padding:8px 15px;border-radius:18px;
+  border:1px solid #3b5365;background:#071019bb;font-weight:900;transition:.2s
+}
+
+#mobileControls{
+  position:absolute;left:15px;bottom:15px;z-index:6;display:none;user-select:none
+}
+.pad{position:relative;width:166px;height:166px}
+.padBtn{
+  position:absolute;width:52px;height:52px;border-radius:14px;border:1px solid #637a8d;
+  background:#122333d9;color:#fff;font-size:22px;font-weight:900
+}
+.padBtn:active,.shootBtn:active{transform:scale(.94);background:#1f4564}
+#up{left:57px;top:0}#left{left:0;top:57px}#down{left:57px;top:114px}#right{left:114px;top:57px}
+.shootBtn{
+  position:absolute;right:15px;bottom:24px;z-index:6;width:83px;height:83px;display:none;
+  border-radius:50%;border:2px solid #cf6f76;background:#652f38dd;color:#fff;font-weight:900
+}
+
+.toast{
+  position:absolute;left:50%;bottom:25px;transform:translateX(-50%);z-index:30;
+  background:#101d29;border:1px solid #47637a;padding:11px 16px;border-radius:11px;opacity:0;transition:.22s
+}
+.toast.show{opacity:1;bottom:38px}
+
+.pausePanel{text-align:center;width:min(420px,92vw)}
+.big{font-size:32px;font-weight:900}
+@media (max-width:800px){
+  .controls{display:none}.hud{min-width:235px;left:8px;top:8px}.weapon{right:8px;bottom:8px;min-width:195px}
+  #mobileControls{display:block}.shootBtn{display:block}
+  .logo{font-size:35px}.setting{grid-template-columns:115px 1fr 70px}
+}
+@media (pointer:coarse){
+  #mobileControls{display:block}.shootBtn{display:block}
+}
+</style>
+</head>
+<body>
+
+<section id="home" class="screen">
+  <div class="coinBox">🪙 <span id="homeCoins">1000</span></div>
+  <div class="home">
+    <div class="logo">MINI WARRIOR</div>
+    <div class="subtitle">TACTICAL 2D ARENA</div>
+    <button class="menu play" onclick="startGame()">PLAY</button>
+    <button class="menu" onclick="openPanel('shopPanel')">SHOP</button>
+    <button class="menu" onclick="openPanel('armoryPanel')">ARMORY</button>
+    <button class="menu" onclick="openPanel('settingsPanel')">SETTINGS</button>
+  </div>
+</section>
+
+<div id="shopPanel" class="panelShade hidden"><div class="panel">
+  <h2>SHOP</h2>
+  <h3>SKINS</h3><div id="skinShop" class="grid"></div>
+  <h3 style="margin-top:20px">WEAPONS</h3><div id="weaponShop" class="grid"></div>
+  <button class="menu back" onclick="closePanels()">BACK</button>
+</div></div>
+
+<div id="armoryPanel" class="panelShade hidden"><div class="panel">
+  <h2>ARMORY</h2>
+  <h3>SKINS</h3><div id="ownedSkins" class="grid"></div>
+  <h3 style="margin-top:20px">WEAPONS</h3><div id="ownedWeapons" class="grid"></div>
+  <button class="menu back" onclick="closePanels()">BACK</button>
+</div></div>
+
+<div id="settingsPanel" class="panelShade hidden"><div class="panel">
+  <h2>SETTINGS</h2>
+  <div class="setting"><span>SOUND</span><input id="sound" type="range" min="0" max="100" value="75"><span id="soundVal">75</span></div>
+  <div class="setting"><span>MUSIC</span><input id="music" type="range" min="0" max="100" value="35"><span id="musicVal">35</span></div>
+  <div class="setting"><span>MOVE UP</span><button class="key" onclick="rebind('up')">W</button><span></span></div>
+  <div class="setting"><span>MOVE DOWN</span><button class="key" onclick="rebind('down')">S</button><span></span></div>
+  <div class="setting"><span>MOVE LEFT</span><button class="key" onclick="rebind('left')">A</button><span></span></div>
+  <div class="setting"><span>MOVE RIGHT</span><button class="key" onclick="rebind('right')">D</button><span></span></div>
+  <div class="setting"><span>SHOOT</span><button class="key" onclick="rebind('shoot')">P</button><span></span></div>
+  <div class="help">
+    <b>Keyboard:</b> WASD or Arrow Keys to move. P or Space to shoot.<br>
+    <b>Mouse:</b> move the cursor to aim, hold left mouse to fire.<br>
+    <b>Touch:</b> use the on-screen movement and FIRE buttons.
+  </div>
+  <button class="menu back" onclick="closePanels()">BACK</button>
+</div></div>
+
+<section id="game" class="screen hidden">
+  <canvas id="canvas"></canvas>
+
+  <div class="hud">
+    <div class="hpTop"><span>HEALTH</span><span id="hpText">100 / 100</span></div>
+    <div class="hpTrack"><div id="hpFill" class="hpFill"></div></div>
+    <div class="stats">
+      <span>🪙 <b id="coinsText">1000</b></span>
+      <span>☠ <b id="killsText">0</b></span>
+      <span>WAVE <b id="waveText">1</b></span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <b>WASD / ARROWS</b> MOVE<br>
+    <b>P / SPACE / MOUSE</b> SHOOT
+  </div>
+
+  <div id="waveMsg" class="wave">WAVE 1</div>
+
+  <div class="weapon">
+    <div id="weaponTitle" class="weaponTitle">AK</div>
+    <div id="ammo" class="ammo">Automatic • 20 DMG</div>
+    <button class="pause" onclick="pauseGame()">PAUSE</button>
+  </div>
+
+  <div id="mobileControls">
+    <div class="pad">
+      <button id="up" class="padBtn">▲</button>
+      <button id="left" class="padBtn">◀</button>
+      <button id="down" class="padBtn">▼</button>
+      <button id="right" class="padBtn">▶</button>
+    </div>
+  </div>
+  <button id="shootBtn" class="shootBtn">FIRE</button>
+
+  <div id="toast" class="toast"></div>
+</section>
+
+<div id="pausePanel" class="panelShade hidden">
+  <div class="panel pausePanel">
+    <div class="big">PAUSED</div>
+    <p style="color:#9db2c4">Your warrior is safe.</p>
+    <button class="menu play" onclick="resumeGame()">RESUME</button>
+    <button class="menu" onclick="exitGame()">EXIT TO MENU</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+let W=innerWidth,H=innerHeight,DPR=1;
+
+function resizeCanvas(){
+  W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.floor(W*DPR);
+  canvas.height=Math.floor(H*DPR);
+  canvas.style.width=W+"px";canvas.style.height=H+"px";
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+addEventListener("resize",resizeCanvas);resizeCanvas();
+
+const SKINS={
+ "Default Warrior":{price:0,body:"#3b556b",vest:"#273541",helmet:"#556e7d",accent:"#dce7ec",icon:"🪖"},
+ "Shadow Skin":{price:300,body:"#343b43",vest:"#20252b",helmet:"#464d55",accent:"#b9c0c7",icon:"⬛"},
+ "Red Warrior":{price:300,body:"#9f3f48",vest:"#5d2630",helmet:"#bf565f",accent:"#ffd6d9",icon:"🟥"},
+ "Blue Warrior":{price:300,body:"#356f9f",vest:"#204968",helmet:"#4e90bd",accent:"#d7ecff",icon:"🟦"},
+ "Golden Warrior":{price:300,body:"#ad8126",vest:"#654c18",helmet:"#d7ad45",accent:"#fff1aa",icon:"🟨"},
+ "Green Warrior":{price:300,body:"#398154",vest:"#255d3c",helmet:"#4aa66c",accent:"#d8ffe1",icon:"🟩"}
+};
+const WEAPONS={
+ AK:{price:0,damage:20,rate:150,bulletSpeed:760,color:"#e3b93e"},
+ M4:{price:500,damage:27,rate:120,bulletSpeed:820,color:"#9ba7b2"},
+ M16:{price:500,damage:34,rate:105,bulletSpeed:880,color:"#77b8d6"}
+};
+
+let data={
+ coins:1000,ownedSkins:["Default Warrior"],ownedWeapons:["AK"],
+ skin:"Default Warrior",weapon:"AK",
+ sound:75,music:35,
+ keys:{up:"w",down:"s",left:"a",right:"d",shoot:"p"}
+};
+let rebinding=null;
+try{
+ const saved=JSON.parse(localStorage.getItem("mini_warrior_fixed")||"null");
+ if(saved)data=Object.assign(data,saved),data.keys=Object.assign({up:"w",down:"s",left:"a",right:"d",shoot:"p"},saved.keys||{});
+}catch(_){}
+
+const keyState=new Set();
+const pointer={x:W/2,y:H/2,down:false};
+let moveTouch={up:false,down:false,left:false,right:false};
+let fireTouch=false;
+
+let running=false,paused=false,last=0,shotTimer=0,damageTimer=0;
+let player=null,enemies=[],bullets=[],drops=[],particles=[];
+let kills=0,wave=1,spawned=0,target=7,spawnTimer=0,walkTime=0;
+let audio=null;
+
+function save(){localStorage.setItem("mini_warrior_fixed",JSON.stringify(data));updateAllUI()}
+function updateAllUI(){
+ document.getElementById("homeCoins").textContent=data.coins;
+ document.getElementById("coinsText").textContent=data.coins;
+ document.getElementById("sound").value=data.sound;document.getElementById("soundVal").textContent=data.sound;
+ document.getElementById("music").value=data.music;document.getElementById("musicVal").textContent=data.music;
+ document.querySelectorAll("#settingsPanel .key").forEach((b,i)=>{
+  const a=["up","down","left","right","shoot"][i];b.textContent=data.keys[a].toUpperCase();
+ });
+ document.getElementById("weaponTitle").textContent=data.weapon;
+ const w=WEAPONS[data.weapon];document.getElementById("ammo").textContent=`Automatic • ${w.damage} DMG • ${Math.round(1000/w.rate)} shots/s`;
+}
+["sound","music"].forEach(id=>document.getElementById(id).addEventListener("input",e=>{data[id]=+e.target.value;updateAllUI();save()}));
+
+function openPanel(id){document.getElementById(id).classList.remove("hidden"); if(id==="shopPanel")renderShop();if(id==="armoryPanel")renderArmory();if(id==="settingsPanel")updateAllUI()}
+function closePanels(){document.querySelectorAll(".panelShade").forEach(x=>x.classList.add("hidden"))}
+
+function buySkin(n){
+ const x=SKINS[n];if(data.ownedSkins.includes(n))return toast("Already owned");
+ if(data.coins<x.price)return toast("Not enough coins");
+ data.coins-=x.price;data.ownedSkins.push(n);data.skin=n;save();renderShop();renderArmory();toast(n+" unlocked");
+}
+function buyWeapon(n){
+ const x=WEAPONS[n];if(data.ownedWeapons.includes(n))return toast("Already owned");
+ if(data.coins<x.price)return toast("Not enough coins");
+ data.coins-=x.price;data.ownedWeapons.push(n);data.weapon=n;save();renderShop();renderArmory();toast(n+" unlocked");
+}
+function selectSkin(n){if(data.ownedSkins.includes(n)){data.skin=n;save();renderArmory();toast("Equipped "+n)}}
+function selectWeapon(n){if(data.ownedWeapons.includes(n)){data.weapon=n;save();renderArmory();toast("Equipped "+n)}}
+function renderShop(){
+ document.getElementById("skinShop").innerHTML=Object.entries(SKINS).filter(([n])=>n!=="Default Warrior").map(([n,v])=>
+ `<div class="card"><div class="icon">${v.icon}</div><h3>${n}</h3><div class="row"><span class="price">${v.price} 🪙</span><button class="smallBtn buy" onclick="buySkin('${n}')">${data.ownedSkins.includes(n)?"OWNED":"BUY"}</button></div></div>`).join("");
+ document.getElementById("weaponShop").innerHTML=Object.entries(WEAPONS).filter(([n])=>n!=="AK").map(([n,v])=>
+ `<div class="card"><div class="icon">▰</div><h3>${n}</h3><div class="muted">${v.damage} damage • ${Math.round(1000/v.rate)} shots/s</div><div class="row" style="margin-top:10px"><span class="price">${v.price} 🪙</span><button class="smallBtn buy" onclick="buyWeapon('${n}')">${data.ownedWeapons.includes(n)?"OWNED":"BUY"}</button></div></div>`).join("");
+}
+function renderArmory(){
+ document.getElementById("ownedSkins").innerHTML=data.ownedSkins.map(n=>
+ `<div class="card"><div class="icon">${SKINS[n].icon}</div><h3>${n}</h3><button class="smallBtn ${data.skin===n?"selected":""}" onclick="selectSkin('${n}')">${data.skin===n?"EQUIPPED":"EQUIP"}</button></div>`).join("");
+ document.getElementById("ownedWeapons").innerHTML=data.ownedWeapons.map(n=>
+ `<div class="card"><div class="icon">▰</div><h3>${n}</h3><div class="muted">${WEAPONS[n].damage} damage</div><button class="smallBtn ${data.weapon===n?"selected":""}" onclick="selectWeapon('${n}')">${data.weapon===n?"EQUIPPED":"EQUIP"}</button></div>`).join("");
+}
+function rebind(k){rebinding=k;toast("Press the new key")}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),1200)}
+
+addEventListener("keydown",e=>{
+ if(rebinding){
+   e.preventDefault();data.keys[rebinding]=e.key.toLowerCase();rebinding=null;save();toast("Control updated");return
+ }
+ if(e.repeat&&e.code!=="Space")return;
+ keyState.add(e.key.toLowerCase());keyState.add(e.code.toLowerCase());
+ if(e.key==="Escape"&&running){pauseGame();return}
+ if((e.key.toLowerCase()===data.keys.shoot)||e.code==="Space")fireTouch=true;
+});
+addEventListener("keyup",e=>{
+ keyState.delete(e.key.toLowerCase());keyState.delete(e.code.toLowerCase());
+ if(e.key.toLowerCase()===data.keys.shoot||e.code==="Space")fireTouch=false;
+});
+
+function canvasPoint(e){
+ const r=canvas.getBoundingClientRect();
+ pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top;
+}
+canvas.addEventListener("pointermove",canvasPoint);
+canvas.addEventListener("pointerdown",e=>{canvasPoint(e);pointer.down=true;});
+addEventListener("pointerup",()=>pointer.down=false);
+
+function bindPad(id,key){
+ const el=document.getElementById(id);
+ const on=ev=>{ev.preventDefault();moveTouch[key]=true};
+ const off=ev=>{ev.preventDefault();moveTouch[key]=false};
+ el.addEventListener("pointerdown",on);el.addEventListener("pointerup",off);el.addEventListener("pointercancel",off);el.addEventListener("pointerleave",off);
+}
+bindPad("up","up");bindPad("down","down");bindPad("left","left");bindPad("right","right");
+const sb=document.getElementById("shootBtn");
+sb.addEventListener("pointerdown",e=>{e.preventDefault();fireTouch=true});
+sb.addEventListener("pointerup",e=>{e.preventDefault();fireTouch=false});
+sb.addEventListener("pointercancel",()=>fireTouch=false);
+sb.addEventListener("pointerleave",()=>fireTouch=false);
+
+function startGame(){
+ closePanels();document.getElementById("pausePanel").classList.add("hidden");
+ document.getElementById("home").classList.add("hidden");document.getElementById("game").classList.remove("hidden");
+ resizeCanvas();
+ player={x:W/2,y:H/2,hp:100,maxHp:100,r:15,angle:0,body:SKINS[data.skin].body,vest:SKINS[data.skin].vest,helmet:SKINS[data.skin].helmet,accent:SKINS[data.skin].accent};
+ enemies=[];bullets=[];drops=[];particles=[];kills=0;wave=1;spawned=0;target=7;spawnTimer=.2;shotTimer=0;damageTimer=0;walkTime=0;paused=false;running=true;
+ pointer.x=W/2;pointer.y=H/2;last=performance.now();setWave("WAVE 1");requestAnimationFrame(loop)
+}
+function pauseGame(){if(!running)return;paused=true;document.getElementById("pausePanel").classList.remove("hidden")}
+function resumeGame(){paused=false;document.getElementById("pausePanel").classList.add("hidden");last=performance.now();requestAnimationFrame(loop)}
+function exitGame(){running=false;paused=false;document.getElementById("pausePanel").classList.add("hidden");document.getElementById("game").classList.add("hidden");document.getElementById("home").classList.remove("hidden");save()}
+
+function setWave(t){const e=document.getElementById("waveMsg");e.textContent=t;e.style.opacity=1;clearTimeout(setWave.t);setWave.t=setTimeout(()=>e.style.opacity=.55,1300)}
+
+function shoot(){
+ const w=WEAPONS[data.weapon],now=performance.now();
+ if(now-shotTimer<w.rate)return;
+ shotTimer=now;
+ const dx=pointer.x-player.x,dy=pointer.y-player.y,d=Math.hypot(dx,dy)||1,a=Math.atan2(dy,dx);
+ player.angle=a;
+ bullets.push({x:player.x+Math.cos(a)*27,y:player.y+Math.sin(a)*27,vx:Math.cos(a)*w.bulletSpeed,vy:Math.sin(a)*w.bulletSpeed,life:1.2,r:3.7,damage:w.damage,color:w.color});
+ particlesBurst(player.x+Math.cos(a)*28,player.y+Math.sin(a)*28,w.color,4,70);
+ tone(100,.04,"square",.04)
+}
+
+function spawnEnemy(){
+ if(spawned>=target)return;
+ const side=Math.floor(Math.random()*4),pad=40;let x,y;
+ if(side===0){x=pad;y=20+Math.random()*(H-40)}else if(side===1){x=W-pad;y=20+Math.random()*(H-40)}else if(side===2){x=20+Math.random()*(W-40);y=pad}else{x=20+Math.random()*(W-40);y=H-pad}
+ const r=Math.random(),kind=wave>=4&&r>.8?"brute":wave>=2&&r>.58?"runner":"grunt";
+ const a={grunt:{r:18,hp:42,speed:72,damage:9,reward:25,color:"#a93d49"},runner:{r:15,hp:30,speed:120,damage:6,reward:30,color:"#b06a39"},brute:{r:24,hp:105,speed:43,damage:16,reward:50,color:"#713c92"}}[kind];
+ enemies.push({x,y,kind,hit:0,...a});spawned++
+}
+
+function killEnemy(i){
+ const e=enemies[i];enemies.splice(i,1);kills++;
+ drops.push({x:e.x,y:e.y,value:e.reward,t:0});
+ particlesBurst(e.x,e.y,e.color,18,120);tone(180,.06,"triangle",.04)
+}
+
+function update(dt){
+ const k=data.keys;
+ let dx=0,dy=0;
+ if(keyState.has(k.left)||keyState.has("arrowleft")||moveTouch.left)dx-=1;
+ if(keyState.has(k.right)||keyState.has("arrowright")||moveTouch.right)dx+=1;
+ if(keyState.has(k.up)||keyState.has("arrowup")||moveTouch.up)dy-=1;
+ if(keyState.has(k.down)||keyState.has("arrowdown")||moveTouch.down)dy+=1;
+ if(dx||dy){const l=Math.hypot(dx,dy);dx/=l;dy/=l;player.x+=dx*235*dt;player.y+=dy*235*dt;walkTime+=dt*12}
+ player.x=Math.max(24,Math.min(W-24,player.x));player.y=Math.max(24,Math.min(H-24,player.y));
+ player.angle=Math.atan2(pointer.y-player.y,pointer.x-player.x);
+ if(fireTouch||pointer.down||keyState.has(k.shoot)||keyState.has("space"))shoot();
+
+ spawnTimer-=dt;if(spawnTimer<=0){if(spawned<target)spawnEnemy();spawnTimer=Math.max(.18,.66-wave*.02)}
+ if(spawned>=target&&enemies.length===0){wave++;spawned=0;target=6+wave*2;setWave("WAVE "+wave);tone(430,.12,"triangle",.035)}
+
+ damageTimer-=dt;
+ enemies.forEach(e=>{
+   const x=player.x-e.x,y=player.y-e.y,d=Math.hypot(x,y)||1;
+   e.x+=x/d*e.speed*dt;e.y+=y/d*e.speed*dt;e.hit=Math.max(0,e.hit-dt);
+   if(d<player.r+e.r+3&&damageTimer<=0){player.hp=Math.max(0,player.hp-e.damage);damageTimer=.42;particlesBurst(player.x,player.y,"#ff5b66",8,90);tone(75,.08,"sawtooth",.03);if(player.hp<=0)die()}
+ });
+
+ for(let i=bullets.length-1;i>=0;i--){
+   const b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+   let remove=b.life<=0||b.x<-30||b.x>W+30||b.y<-30||b.y>H+30;
+   if(!remove)for(let j=enemies.length-1;j>=0;j--){
+     const e=enemies[j];if(Math.hypot(b.x-e.x,b.y-e.y)<b.r+e.r){e.hp-=b.damage;e.hit=.08;particlesBurst(b.x,b.y,b.color,5,75);remove=true;if(e.hp<=0)killEnemy(j);break}
+   }
+   if(remove)bullets.splice(i,1)
+ }
+ for(let i=drops.length-1;i>=0;i--){
+   const c=drops[i];c.t+=dt;
+   if(Math.hypot(c.x-player.x,c.y-player.y)<30){data.coins+=c.value;drops.splice(i,1);save();tone(650,.05,"sine",.025)}
+ }
+ particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.95;p.vy*=.95;p.life-=dt});
+ particles=particles.filter(p=>p.life>0);
+ updateHUD()
+}
+function die(){running=false;setTimeout(()=>{alert("GAME OVER\nKills: "+kills+"\nWave: "+wave);exitGame()},50)}
+function updateHUD(){
+ document.getElementById("hpText").textContent=Math.round(player?.hp||0)+" / 100";
+ document.getElementById("hpFill").style.width=Math.max(0,player?.hp||0)+"%";
+ document.getElementById("coinsText").textContent=data.coins;document.getElementById("killsText").textContent=kills;document.getElementById("waveText").textContent=wave
+}
+
+function drawWeapon(x,y,angle){
+ const w=data.weapon;
+ ctx.save();ctx.translate(x,y);ctx.rotate(angle);
+ ctx.fillStyle="#11161b";
+ if(w==="AK"){
+   ctx.fillRect(4,-4,31,8);ctx.fillRect(31,-2,19,4);ctx.fillRect(9,4,6,16);
+   ctx.fillStyle="#714b2c";ctx.fillRect(-1,-5,11,10);ctx.fillRect(8,10,8,14);
+   ctx.fillStyle="#20272d";ctx.fillRect(18,5,8,11);
+ }else if(w==="M4"){
+   ctx.fillRect(3,-4,37,8);ctx.fillRect(38,-2,17,4);ctx.fillRect(13,4,6,14);
+   ctx.fillStyle="#7b8791";ctx.fillRect(7,-5,16,10);
+   ctx.fillStyle="#20262b";ctx.fillRect(26,4,5,14);ctx.fillRect(-1,-6,10,12);
+ }else{
+   ctx.fillRect(2,-4,42,8);ctx.fillRect(40,-2,18,4);ctx.fillRect(16,4,6,17);
+   ctx.fillStyle="#85939e";ctx.fillRect(8,-5,23,10);ctx.fillStyle="#20262b";ctx.fillRect(28,4,5,13);ctx.fillRect(-2,-6,10,12)
+ }
+ ctx.restore()
+}
+
+function drawPlayer(){
+ const bob=(Math.sin(walkTime)*1.8),s=1;
+ ctx.save();ctx.translate(player.x,player.y+bob);ctx.rotate(player.angle);
+ /* legs */
+ ctx.fillStyle="#151c22";ctx.fillRect(-9,7,7,15);ctx.fillRect(2,7,7,15);
+ ctx.fillStyle="#222a31";ctx.fillRect(-11,20,9,4);ctx.fillRect(1,20,9,4);
+ /* torso + tactical vest */
+ ctx.fillStyle=player.body;ctx.fillRect(-11,-8,22,20);
+ ctx.fillStyle=player.vest;ctx.fillRect(-10,-5,20,13);
+ ctx.strokeStyle="#7c95a6";ctx.lineWidth=1.5;ctx.strokeRect(-10,-5,20,13);
+ /* shoulders/arms */
+ ctx.fillStyle=player.body;ctx.fillRect(-16,-7,7,17);ctx.fillRect(9,-7,7,17);
+ /* neck */
+ ctx.fillStyle="#b58f72";ctx.fillRect(-4,-14,8,5);
+ /* helmeted head */
+ ctx.fillStyle=player.helmet;ctx.beginPath();ctx.arc(0,-18,10,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#26333d";ctx.fillRect(-11,-19,22,4);
+ /* face visor - no emoji / no drawn face */
+ ctx.fillStyle="#18232d";ctx.fillRect(-8,-17,16,7);
+ ctx.fillStyle=player.accent;ctx.fillRect(-5,-15,10,2);
+ drawWeapon(3,1,0);
+ ctx.restore();
+}
+
+function drawEnemy(e){
+ const bob=Math.sin((performance.now()/130)+e.x*.02)*1;
+ ctx.save();ctx.translate(e.x,e.y+bob);
+ /* boots + legs */
+ ctx.fillStyle="#171c21";ctx.fillRect(-9,7,6,16);ctx.fillRect(3,7,6,16);
+ /* body */
+ ctx.fillStyle=e.hit>0?"#fff":e.color;ctx.fillRect(-12,-8,24,18);
+ ctx.fillStyle="#30363c";ctx.fillRect(-10,-4,20,9);
+ /* shoulders */
+ ctx.fillStyle=e.color;ctx.fillRect(-16,-7,6,15);ctx.fillRect(10,-7,6,15);
+ /* helmet */
+ ctx.fillStyle="#2e343b";ctx.beginPath();ctx.arc(0,-16,e.r*.52,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#11171c";ctx.fillRect(-e.r*.45,-16,e.r*.9,5);
+ /* health bar */
+ const max=e.kind==="grunt"?42:e.kind==="runner"?30:105;
+ ctx.fillStyle="#25171a";ctx.fillRect(-e.r,-e.r-10,e.r*2,4);
+ ctx.fillStyle="#59dd75";ctx.fillRect(-e.r,-e.r-10,e.r*2*Math.max(0,e.hp/max),4);
+ ctx.restore();
+}
+
+function particlesBurst(x,y,color,n,speed){
+ for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=Math.random()*speed+20;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35+Math.random()*.35,max:.7,color})}
+}
+
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ ctx.fillStyle="#1a2a1b";ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle="rgba(255,255,255,.035)";ctx.lineWidth=1;
+ for(let x=0;x<W;x+=48){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+ for(let y=0;y<H;y+=48){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ /* arena details */
+ ctx.strokeStyle="rgba(213,190,132,.08)";ctx.lineWidth=2;
+ for(let i=0;i<9;i++){const x=(i*137+70)%(W-30),y=(i*101+45)%(H-30);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+12,y+6);ctx.stroke()}
+ drops.forEach(c=>{const p=1+Math.sin(c.t*8)*.13;ctx.save();ctx.translate(c.x,c.y);ctx.scale(p,p);ctx.fillStyle="#f3c73f";ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fff1a6";ctx.stroke();ctx.restore()});
+ bullets.forEach(b=>{ctx.fillStyle=b.color;ctx.shadowColor=b.color;ctx.shadowBlur=10;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0});
+ enemies.forEach(drawEnemy);drawPlayer();
+ particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,2.4,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1})
+}
+function loop(t){
+ if(!running||paused)return;const dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();requestAnimationFrame(loop)
+}
+function tone(freq,dur,type="sine",gain=.02){
+ if(data.sound<=0)return;
+ try{audio ||= new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.value=gain*(data.sound/100);o.connect(g);g.connect(audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+dur);o.stop(audio.currentTime+dur)}catch(_){}
+}
+
+updateAllUI();renderShop();renderArmory();
+</script>
+</body>
+</html>
